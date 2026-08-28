@@ -192,6 +192,8 @@ def parse_stages(raw_data):
         # 根据不同类型生成显示名称
         if difficulty == "FOUR_STAR":
             display_name = f"突袭 {code} {name}"
+        elif difficulty == "SIX_STAR":
+            display_name = f"沙盘 {code} {name}"
         elif difficulty == "NORMAL":
             display_name = f"{code} {name}"
         else:

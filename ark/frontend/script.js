@@ -19,16 +19,17 @@ const teamDisplay = document.getElementById('teamDisplay');
 const stageDisplay = document.getElementById('stageDisplay');
 
 // ===== 图片配置 =====
-// 使用 Aceship/Arknight-Images 仓库的 avatars 目录（按干员 id 命名）
-const AVATAR_CDN_BASE = 'https://cdn.jsdelivr.net/gh/Aceship/Arknight-Images@main/avatars/';
+// 头像文件名格式：{干员ID}.png，如 char_1013_chen2.png
+const AVATAR_CDN_BASE = 'https://cdn.jsdelivr.net/gh/yuanyan3060/ArknightsGameResource@main/avatar/';
 
 /**
  * 获取干员头像 URL
- * @param {string} id - 干员 ID（如 char_4107_vrdant）
+ * @param {string} name - 干员名称（保留备用）
+ * @param {string} id - 干员 ID（如 char_1013_chen2）
  * @returns {string} 头像图片 URL
  */
-function getOperatorAvatarUrl(id) {
-    return `${AVATAR_CDN_BASE}${encodeURIComponent(id)}.png`;
+function getOperatorAvatarUrl(name, id) {
+    return `${AVATAR_CDN_BASE}${id}.png`;
 }
 
 // ===== 工具函数 =====
@@ -183,19 +184,6 @@ function reorderTeamForVerticalDisplay(team, teamSize) {
     return result;
 }
 
-/**
- * 处理图片加载失败时的备用显示
- */
-function handleImageError(img) {
-    img.style.display = 'none';
-    // 或者显示一个占位符
-    const parent = img.parentElement;
-    const placeholder = document.createElement('span');
-    placeholder.className = 'avatar-placeholder';
-    placeholder.textContent = '🖼️';
-    parent.insertBefore(placeholder, img);
-}
-
 function renderResult(data) {
     resultPanel.style.display = 'block';
     
@@ -218,8 +206,7 @@ function renderResult(data) {
         if (op) {
             const stars = '⭐'.repeat(op.star);
             const skillName = op.selected_skill ? op.selected_skill.name : '';
-            // 使用干员 ID 获取头像（Aceship 仓库按 id 命名）
-            const avatarUrl = getOperatorAvatarUrl(op.id);
+            const avatarUrl = getOperatorAvatarUrl(op.name, op.id);
             
             html += `
                 <div class="team-card" data-slot="${i}">
@@ -233,7 +220,8 @@ function renderResult(data) {
                         />
                         <div class="avatar-placeholder" style="display:none;">🖼️</div>
                     </div>
-                    <div class="op-name">${op.name} <span class="star-emoji">${stars}</span></div>
+                    <div class="op-name">${op.name}</div>
+                    <span class="star-emoji">${stars}</span>
                     <div class="op-info">${op.profession}</div>
                     ${skillName ? `<div class="op-skill">⚡ ${skillName}</div>` : ''}
                     <button class="exclude-op-btn" data-id="${op.id}">🚫 排除</button>
@@ -355,6 +343,36 @@ async function loadOperators() {
     }
 }
 
+// ===== 人数输入范围限制 =====
+
+function clampTeamSize(input) {
+    let val = parseInt(input.value);
+    if (isNaN(val) || val < 1) {
+        input.value = 1;
+    } else if (val > 12) {
+        input.value = 12;
+    }
+    // 联动校验
+    if (input.id === 'minSize') {
+        const maxVal = parseInt(maxSize.value) || 6;
+        if (parseInt(input.value) > maxVal) input.value = maxVal;
+    } else if (input.id === 'maxSize') {
+        const minVal = parseInt(minSize.value) || 3;
+        if (parseInt(input.value) < minVal) input.value = minVal;
+    }
+}
+
+// 固定人数
+fixedSize.addEventListener('change', () => clampTeamSize(fixedSize));
+fixedSize.addEventListener('input', () => clampTeamSize(fixedSize));
+
+// 最小人数
+minSize.addEventListener('change', () => clampTeamSize(minSize));
+minSize.addEventListener('input', () => clampTeamSize(minSize));
+
+// 最大人数
+maxSize.addEventListener('change', () => clampTeamSize(maxSize));
+maxSize.addEventListener('input', () => clampTeamSize(maxSize));
 // ===== 事件绑定 =====
 
 generateBtn.addEventListener('click', generateTeam);
@@ -378,3 +396,4 @@ loadExclude();
 
 console.log('🎲 明日方舟随机队伍工具已启动！');
 console.log('后端 API:', API_BASE);
+console.log('头像 CDN:', AVATAR_CDN_BASE);
